@@ -37,3 +37,8 @@ DerivedData/
 .swiftpm/
 *.xcuserstate
 .DS_Store
+*.xcodeproj
+build/
+.swiftpm/xcode/
+__pycache__/
+AppAssets/Info.plist

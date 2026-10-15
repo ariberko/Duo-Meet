@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  xcode-app:
+    name: App + tests (Xcode)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use the newest Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)
+          echo "Using $xcode"
+          sudo xcode-select -s "$xcode/Contents/Developer"
+          xcodebuild -version
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Pick a simulator
+        run: echo "IPHONE=$(xcrun simctl list devices available -j | python3 scripts/pick-simulator.py iphone)" >> "$GITHUB_ENV"
+      - name: Build and run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project MeetingOS.xcodeproj \
+            -scheme MeetingOS \
+            -destination "id=$IPHONE" \
+            CODE_SIGNING_ALLOWED=NO \
+            > test.log 2>&1 || { ./scripts/report-errors.sh test.log; exit 1; }
+          grep -E "Test Suite|Executed|error:|failed" test.log | tail -n 40
+
+  playground-app:
+    name: iPad Playgrounds app
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use the newest Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)
+          sudo xcode-select -s "$xcode/Contents/Developer"
+      - name: Build the .swiftpm app for iOS Simulator
+        working-directory: MeetingOS.swiftpm
+        run: |
+          set -o pipefail
+          xcodebuild -list
+          xcodebuild build \
+            -scheme "MeetingOS" \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            > ../playground.log 2>&1 || { ../scripts/report-errors.sh ../playground.log; exit 1; }
+          tail -n 20 ../playground.log

@@ -8,19 +8,13 @@ No accounts, no server, no AI calls. Everything stays on the device.
 
 ## Run it
 
-Requirements: Xcode 16 or newer, iOS 17+ simulator or device.
+**On iPad (no Mac needed):** download the repo ZIP, unzip it in Files, tap `MeetingOS.swiftpm` and press ▶︎ in Swift Playgrounds.
 
-1. Open `MeetingOS.xcodeproj`.
-2. Pick the **MeetingOS** scheme and an iPhone simulator.
-3. Press **Run**. For a device, set your team under *Signing & Capabilities* and change the bundle id `com.example.MeetingOS`.
+**On GitHub's Macs:** every push builds the app, runs the unit tests and builds the Playgrounds app (`.github/workflows/build.yml`).
 
-Tests (model, lifecycle, summary, persistence):
+**TestFlight:** add the repo secrets `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8` (same App Store Connect API key as the other Duo apps), create the app `com.ariberkowitz.meetingos` in App Store Connect, then run "Upload to TestFlight" or push a commit with `[testflight]` in its message.
 
-```sh
-# In Xcode: Product > Test (the scheme runs MeetingCoreTests)
-# Or from the terminal on a Mac:
-cd Packages/MeetingCore && swift test
-```
+**On a Mac:** `brew install xcodegen && xcodegen`, then open `MeetingOS.xcodeproj`.
 
 ## What's in the MVP
 
@@ -55,26 +49,20 @@ The switch is based only on the width the system actually gives the app (`Geomet
 ## Project layout
 
 ```
-MeetingOS.xcodeproj
-MeetingOS/                     App target (SwiftUI)
-  App/                         App entry, root navigation, MeetingLibrary (state + saving), LiveDraft
-  Views/Home                   Dashboard, open tasks
-  Views/Setup                  New / upcoming meeting form
-  Views/Live                   Live workspace and its two panes
-  Views/Summary                Summary, copy, share, edit text
-  Views/Components             Capture bar, task row and editor, timer pill, toast
-Packages/MeetingCore/          UI-free Swift package
-  Models.swift                 Meeting, AgendaItem, Note, ActionItem
-  MeetingEditing.swift         All edits and lifecycle rules
-  MeetingStore.swift           Persistence protocol, JSON file store, in-memory store
-  MeetingSummary.swift         Time formatting, plain-text summary, summarizer protocol
+MeetingOS.swiftpm/     All app code. Opens in Swift Playgrounds on iPad.
+  App/                 App entry, root navigation, MeetingLibrary (state + saving), LiveDraft
+  Sources/Model/       Meeting, AgendaItem, Note, ActionItem, editing rules, JSON store, summary
+  Sources/Views/       Home, setup, live workspace and its two panes, summary, shared components
+Tests/MeetingOSTests/  Unit tests (lifecycle, editing, summary, persistence)
+project.yml            Builds the App Store app and tests from the same code (XcodeGen)
+AppAssets/             App icon and accent color. Redraw the icon: python3 scripts/make_icon.py
 ```
 
-The model and storage have no SwiftUI dependency and are fully unit tested.
+The model and storage files have no SwiftUI dependency and are fully unit tested.
 
 ## Adding AI later
 
-`MeetingSummarizing` in `MeetingSummary.swift` is the seam. The MVP uses `DeterministicSummarizer`, which only formats what the user typed. A future version should:
+`MeetingSummarizing` in `Sources/Model/MeetingSummary.swift` is the seam. The MVP uses `DeterministicSummarizer`, which only formats what the user typed. A future version should:
 
 - Call your own backend, never a model API directly from the app. No keys in the client.
 - Throw `SummarizerError` (`missingCredentials`, `networkUnavailable`, `invalidResponse`) and fall back to the deterministic summary.
@@ -82,8 +70,6 @@ The model and storage have no SwiftUI dependency and are fully unit tested.
 
 ## Known limitations
 
-- Built and reviewed without a Mac in this environment. It has **not** been compiled or run yet. First build on Xcode may show small fixes.
-- The app icon slot is empty (placeholder).
 - No pause for the timer. Duration is wall-clock time from start to end.
 - Out of scope by design: accounts, sync, calendar, recording, transcription, integrations, subscriptions.
 

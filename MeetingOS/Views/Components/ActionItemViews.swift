@@ -114,7 +114,7 @@ struct ActionItemEditor: View {
                                 ForEach(ownerSuggestions, id: \.self) { name in
                                     Button(name) { item.owner = name }
                                         .buttonStyle(.bordered)
-                                        .tint(item.owner == name ? .accentColor : .secondary)
+                                        .tint(item.owner == name ? Color.accentColor : Color.secondary)
                                 }
                             }
                         }
@@ -144,7 +144,7 @@ struct ActionItemEditor: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         var result = item
-                        if !hasDueDate { result.dueDate = nil }
+                        if !hasDueDate { result.dueDate = nil } else if result.dueDate == nil { result.dueDate = Date() }
                         onSave(result)
                         dismiss()
                     }
